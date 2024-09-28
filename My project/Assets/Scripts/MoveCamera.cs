@@ -18,7 +18,7 @@ public class MoveCamera : MonoBehaviour
         if (cameraPosition != null)
         {
             transform.position = cameraPosition.position;
-            Debug.Log("Camera moved to: " + transform.position);
+            // Debug.Log("Camera moved to: " + transform.position);
         }
         else
         {

@@ -4,6 +4,11 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    [Header("Player Attributes")]
+    public float health = 100f;
+    public float damage = 10f;
+    public float defense = 5f;
+
     [Header("Movement")]
     public float moveSpeed;
     public float sprintMultiplier = 1.5f; // Multiplier for sprinting speed
@@ -90,6 +95,8 @@ public class PlayerController : MonoBehaviour
         HandleCameraSway();
     }
 
+    // ==================== MOVEMENT AND GAMEPLAY FUNCTIONS ===================
+
     private void MyInput()
     {
         horizontalInput = Input.GetAxisRaw("Horizontal");
@@ -155,6 +162,8 @@ public class PlayerController : MonoBehaviour
         readyToJump = true;
     }
 
+    // =================== CAMERA FUNCTIONS ========================
+
     private void HandleCameraFOV()
     {
         // attempt to smoothly adjust camera FOV based on whether the player's sprinting or not
@@ -194,5 +203,35 @@ public class PlayerController : MonoBehaviour
             // reset the camera position when not sprinting / at greater speed
             playerCamera.transform.localPosition = originalCameraPosition;
         }
+    }
+
+    // ==================== PICKUP FUNCTIONS =============================
+
+    // all of the things here can be made negative. We use this for our RNG later.
+
+    public void IncreaseHealth(float amount)
+    {
+        health = health + amount;
+    }
+
+    public void IncreaseSpeed(float amount)
+    {
+        originalSpeed += amount;
+        moveSpeed += amount;
+    }
+
+    public void IncreaseJumpForce(float amount)
+    {
+        jumpForce += amount;
+    }
+
+    public void IncreaseDamage(float amount)
+    {
+        damage += amount;
+    }
+
+    public void IncreaseDefense(float amount)
+    {
+        defense += amount;
     }
 }
