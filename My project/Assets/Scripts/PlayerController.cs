@@ -25,12 +25,27 @@ public class PlayerController : MonoBehaviour
     public LayerMask whatIsGround;
     bool grounded;
 
+    [Header("Camera Settings")]
+    public Camera playerCamera; // Holds the camera in the inspector
+    public float normalFOV = 80f;
+    public float sprintFOV = 100f;
+    public float fovChangeSpeed = 10f;
+
+    public float shakeDuration = 0.1f;
+    public float shakeMagnitude = 0.1f;
+    private float shakeTime;
+
+    [Header("Camera Sway Settings")]
+    public float verticalShakeMagnitude = 0.05f; // Magnitude of vertical shake
+    public float horizontalShakeMagnitude = 0.05f; // magnitude of horizontal shake
+
     public Transform orientation;
 
     float horizontalInput;
     float verticalInput;
 
     Vector3 moveDirection;
+    Vector3 originalCameraPosition;
 
     Rigidbody rb;
 
@@ -41,6 +56,13 @@ public class PlayerController : MonoBehaviour
         rb.freezeRotation = true;
         readyToJump = true;
         originalSpeed = moveSpeed; // Store the original speed at the start
+
+        // Init the camera's FOV
+        if(playerCamera != null)
+        {
+            playerCamera.fieldOfView = normalFOV;
+            originalCameraPosition = playerCamera.transform.localPosition;
+        }
     }
 
     private void FixedUpdate()
@@ -63,6 +85,9 @@ public class PlayerController : MonoBehaviour
             rb.drag = groundDrag;
         else
             rb.drag = 0;
+
+        HandleCameraFOV();
+        HandleCameraSway();
     }
 
     private void MyInput()
@@ -130,4 +155,44 @@ public class PlayerController : MonoBehaviour
         readyToJump = true;
     }
 
+    private void HandleCameraFOV()
+    {
+        // attempt to smoothly adjust camera FOV based on whether the player's sprinting or not
+        if (Input.GetKey(sprintKey))
+        {
+            playerCamera.fieldOfView = Mathf.Lerp(playerCamera.fieldOfView, sprintFOV, fovChangeSpeed * Time.deltaTime);
+        }
+        else
+        {
+            playerCamera.fieldOfView = Mathf.Lerp(playerCamera.fieldOfView, normalFOV, fovChangeSpeed * Time.deltaTime);
+        }
+    }
+
+    private float swayTimer = 0f; // Timer controls sway
+    public float swaySpeed = 2f; // speed of sway
+
+    private void HandleCameraSway()
+    {
+        // Apply camera sway if moving faster than default speed
+        if (moveSpeed > originalSpeed)
+        {
+            swayTimer += Time.deltaTime * swaySpeed;
+
+            // Vertical dip (dipping down and back up)
+            float verticalSwayAmount = Mathf.Sin(swayTimer) * verticalShakeMagnitude;
+            // Ensure the camera only dips down by taking the negative absolute value
+            float verticalDip = -Mathf.Abs(verticalSwayAmount);
+
+            // horizontal Sway (moving left and right)
+            float horizontalSwayAmount = Mathf.Sin(swayTimer * 2f) * horizontalShakeMagnitude;
+
+            // Apply the sway to the camera's local position
+            playerCamera.transform.localPosition = originalCameraPosition + new Vector3(horizontalSwayAmount, verticalDip, 0f);
+        }
+        else
+        {
+            // reset the camera position when not sprinting / at greater speed
+            playerCamera.transform.localPosition = originalCameraPosition;
+        }
+    }
 }
