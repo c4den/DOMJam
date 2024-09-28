@@ -6,6 +6,8 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
     public float moveSpeed;
+    public float sprintMultiplier = 1.5f; // Multiplier for sprinting speed
+    private float originalSpeed; // To store the initial move speed
 
     public float groundDrag;
 
@@ -16,6 +18,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Keybinds")]
     public KeyCode jumpKey = KeyCode.Space;
+    public KeyCode sprintKey = KeyCode.LeftShift; // Key for sprinting
 
     [Header("Ground Check")]
     public float playerHeight;
@@ -37,11 +40,13 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
         readyToJump = true;
+        originalSpeed = moveSpeed; // Store the original speed at the start
     }
 
     private void FixedUpdate()
     {
         MovePlayer();
+        SpeedControl();
     }
 
     // Update is called once per frame
@@ -51,6 +56,7 @@ public class PlayerController : MonoBehaviour
         grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
 
         MyInput();
+        HandleSprint();
 
         // handle drag
         if (grounded)
@@ -65,11 +71,24 @@ public class PlayerController : MonoBehaviour
         verticalInput = Input.GetAxisRaw("Vertical");
 
         // when to jump
-        if(Input.GetKey(jumpKey) && readyToJump && grounded)
+        if (Input.GetKey(jumpKey) && readyToJump && grounded)
         {
             readyToJump = false;
             Jump();
             Invoke(nameof(ResetJump), jumpCooldown);
+        }
+    }
+
+    private void HandleSprint()
+    {
+        // check if the sprint key is held down
+        if (Input.GetKey(sprintKey) && grounded)
+        {
+            moveSpeed = originalSpeed * sprintMultiplier; // Increase speed by multiplier
+        }
+        else
+        {
+            moveSpeed = originalSpeed; // Reset speed to original when not sprinting
         }
     }
 
@@ -110,5 +129,5 @@ public class PlayerController : MonoBehaviour
     {
         readyToJump = true;
     }
-    
+
 }
