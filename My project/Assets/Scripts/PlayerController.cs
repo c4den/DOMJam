@@ -234,4 +234,66 @@ public class PlayerController : MonoBehaviour
     {
         defense += amount;
     }
+
+    private HashSet<PlayerEffect> activeEffects = new HashSet<PlayerEffect>();
+
+    public void ApplyEffect(PlayerEffect effect)
+    {
+        ApplyEffectLogic(effect);
+    }
+
+    /*
+    Balance, // no negative effects, go all out!
+    Jester, // You and enemies emit silly noises when hit
+    Knight, // range way down!
+    Rogue, // Enemies kill each other
+    Sun, // Enemies have 2x HP
+    Flames, // You take damage every 5 seconds
+    Fool, // screenshake way up!
+    Fates, // Everyone has 1HP
+    Donjon, // You cannot move
+    Comet // Jump Height x5
+    */
+
+    private void ApplyEffectLogic(PlayerEffect effect)
+    {
+        switch (effect)
+        {
+            case PlayerEffect.Balance:
+                // do nothing!
+                break;
+            case PlayerEffect.Jester:
+                // emit silly noise
+                break;
+            case PlayerEffect.Knight:
+                // range way down
+                break;
+            case PlayerEffect.Rogue:
+                // enemies are mad!
+                break;
+            case PlayerEffect.Sun:
+                // enemies have 2xHP
+                break;
+            case PlayerEffect.Flames:
+                // take damage every 5s
+                break;
+            case PlayerEffect.Fool:
+                // screenshake way up!
+                horizontalShakeMagnitude *= 3;
+                break;
+            case PlayerEffect.Fates:
+                // you have 1HP!
+                health = health - (health - 1);
+                break;
+            case PlayerEffect.Donjon:
+                // you cannot move!
+                originalSpeed = 0;
+                moveSpeed = 0;
+                break;
+            case PlayerEffect.Comet:
+                // Jump Height x5
+                jumpForce *= 5;
+                break;
+        }
+    }
 }
