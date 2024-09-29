@@ -7,7 +7,7 @@ public class EnemyController : MonoBehaviour
     public EnemyType enemyType = EnemyType.Melee;  // Select the enemy type in the Inspector
 
     public Transform player;  // Assign the player in the Inspector
-    public float health = 100f; // enemy health
+    public float health = 100f; // Enemy health
 
     [Header("Movement Settings")]
     public float meleeSpeed = 7.0f;
@@ -30,6 +30,7 @@ public class EnemyController : MonoBehaviour
     public float fireRate = 1.5f;
     private float nextFireTime = 0f;
 
+    private Rigidbody rb; // Reference to the Rigidbody
     private float groundY;     // Store the Y position where the enemy should stay (ground level)
 
     void Start()
@@ -39,11 +40,15 @@ public class EnemyController : MonoBehaviour
         // Set the speed based on enemy type
         speed = (enemyType == EnemyType.Melee) ? meleeSpeed : rangedSpeed;
 
+        // Get the Rigidbody component
+        rb = GetComponent<Rigidbody>();
+        rb.constraints = RigidbodyConstraints.FreezeRotation;
+
         // Adjust the collider size to match the attack range
         CapsuleCollider collider = GetComponent<CapsuleCollider>();
         if (collider != null)
         {
-            collider.isTrigger = true; // Ensure it's set as a trigger
+            collider.isTrigger = false; // Set to false since we'll use collision detection
 
             if (enemyType == EnemyType.Melee)
             {
@@ -56,31 +61,36 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    void Update()
+    void FixedUpdate()
     {
+        // Ensure the enemy stays on the ground
+        Vector3 position = rb.position;
+        position.y = groundY;
+        rb.position = position;
+
         // Calculate the direction to the player
-        Vector3 direction = player.position - transform.position;
+        Vector3 direction = (player.position - rb.position).normalized;
         direction.y = 0; // Lock Y-axis
 
         if (enemyType == EnemyType.Melee)
         {
             // Move toward the player
-            MoveTowardsPlayer(direction.normalized);
+            MoveTowardsPlayer(direction);
         }
         else if (enemyType == EnemyType.Ranged)
         {
-            float distanceToPlayer = direction.magnitude;
+            float distanceToPlayer = Vector3.Distance(player.position, rb.position);
 
             if (distanceToPlayer < retreatRange)
             {
                 // Player is too close; move away
-                Vector3 retreatDirection = (transform.position - player.position).normalized;
+                Vector3 retreatDirection = (rb.position - player.position).normalized;
                 Move(retreatDirection);
             }
             else if (distanceToPlayer > rangedAttackRange)
             {
                 // Player is too far; move closer
-                MoveTowardsPlayer(direction.normalized);
+                MoveTowardsPlayer(direction);
             }
             else
             {
@@ -92,19 +102,28 @@ public class EnemyController : MonoBehaviour
                 }
             }
         }
-
-        // Ensure the enemy stays on the ground
-        transform.position = new Vector3(transform.position.x, groundY, transform.position.z);
     }
 
     private void MoveTowardsPlayer(Vector3 direction)
     {
-        transform.position += direction * speed * Time.deltaTime;
+        rb.MovePosition(rb.position + direction * speed * Time.fixedDeltaTime);
     }
+
 
     private void Move(Vector3 direction)
     {
-        transform.position += direction * speed * Time.deltaTime;
+        rb.MovePosition(rb.position + direction * speed * Time.fixedDeltaTime);
+    }
+
+    public void TakeDamage(float damageAmount)
+    {
+        health -= damageAmount;
+        health = Mathf.Clamp(health, 0, health);
+
+        if (health <= 0)
+        {
+            Die();
+        }
     }
 
     private void FireProjectile()
@@ -126,23 +145,23 @@ public class EnemyController : MonoBehaviour
         projectile.transform.forward = directionToPlayer;
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnCollisionEnter(Collision collision)
     {
         // Check if the enemy collided with the player
-        if (other.CompareTag("Player") && canAttack)
+        if (collision.collider.CompareTag("Player") && canAttack)
         {
             // Get the player's PlayerController script
-            PlayerController playerController = other.GetComponent<PlayerController>();
+            PlayerController playerController = collision.collider.GetComponent<PlayerController>();
             if (playerController != null)
             {
                 // Apply damage to the player
                 playerController.TakeDamage(damage);
 
                 // Apply knockback to the player
-                Rigidbody playerRb = other.GetComponent<Rigidbody>();
+                Rigidbody playerRb = collision.collider.GetComponent<Rigidbody>();
                 if (playerRb != null)
                 {
-                    Vector3 knockbackDirection = (other.transform.position - transform.position).normalized;
+                    Vector3 knockbackDirection = (collision.collider.transform.position - transform.position).normalized;
                     knockbackDirection.y = 0; // Keep knockback horizontal
                     playerRb.AddForce(knockbackDirection * knockbackForce, ForceMode.Impulse);
                 }
@@ -161,17 +180,6 @@ public class EnemyController : MonoBehaviour
     private void ResetAttack()
     {
         canAttack = true;
-    }
-
-    public void TakeDamage(float damageAmount)
-    {
-        health -= damageAmount;
-        health = Mathf.Clamp(health, 0, health);
-
-        if (health <= 0)
-        {
-            Die();
-        }
     }
 
     private void Die()

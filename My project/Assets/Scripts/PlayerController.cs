@@ -24,12 +24,12 @@ public class PlayerController : MonoBehaviour
     bool readyToJump;
 
     [Header("Attack Settings")]
-    public float attackRange = 2.0f;       // Range of the melee attack
-    public float attackDamage = 20f;       // Damage dealt by the attack
-    public float attackCooldown = 0.5f;    // Time between attacks
-    private bool canAttack = true;         // Whether the player can attack
-    public float attackAngle = 60f;        // Angle of the attack cone
-    public LayerMask enemyLayer;           // Layer mask to specify which layers are enemies
+    public float attackRange = 50.0f;       // Range of the ranged attack
+    public float attackDamage = 20f;        // Damage dealt by the attack
+    public float attackCooldown = 1.0f;     // Time between attacks (set to 1 second)
+    private bool canAttack = true;          // Whether the player can attack
+    public LayerMask enemyLayer;            // Layer mask to specify which layers are enemies
+    public float knockbackForce = 10f;      // Force applied to knock back the enemy
 
     [Header("Keybinds")]
     public KeyCode jumpKey = KeyCode.Space;
@@ -53,6 +53,10 @@ public class PlayerController : MonoBehaviour
     [Header("Camera Sway Settings")]
     public float verticalShakeMagnitude = 0.05f; // Magnitude of vertical shake
     public float horizontalShakeMagnitude = 0.05f; // magnitude of horizontal shake
+
+    [Header("DOM Effects")]
+    private bool isFlamesEffectActive = false;
+    private Coroutine flamesCoroutine;
 
     public Transform orientation;
 
@@ -134,46 +138,45 @@ public class PlayerController : MonoBehaviour
     {
         canAttack = false;
 
-        // play the attack anim
-        /*if (animator != null)
+        // Define the raycast origin and direction
+        Vector3 rayOrigin = playerCamera.transform.position;
+        Vector3 rayDirection = playerCamera.transform.forward;
+
+        RaycastHit hit;
+
+        // Perform the raycast
+        if (Physics.Raycast(rayOrigin, rayDirection, out hit, attackRange))
         {
-            animator.SetTrigger("Attack");
-        }*/
-
-        // instantiate attack effect 
-        /*if (attackEffectPrefab != null)
-        {
-            Instantiate(attackEffectPrefab, transform.position + transform.forward, Quaternion.identity);
-        }*/
-
-        // find other colliders in attack range
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
-
-        foreach (Collider hitCollider in hitColliders)
-        {
-            // fidn the direction to the target
-            Vector3 directionToTarget = (hitCollider.transform.position - transform.position).normalized;
-
-            // calculate the angle between the player's forward direction and the target
-            float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
-
-            if (angleToTarget < attackAngle / 2)
+            // Check if the object hit is on the enemy layer
+            if (((1 << hit.collider.gameObject.layer) & enemyLayer) != 0)
             {
-                // the target is within the cone
-
-                // get the enemycontroller script
-                EnemyController enemy = hitCollider.GetComponent<EnemyController>();
+                // Get the EnemyController script
+                EnemyController enemy = hit.collider.GetComponent<EnemyController>();
                 if (enemy != null)
                 {
-                    // apply damage to the enemy
+                    // Apply damage to the enemy
                     enemy.TakeDamage(attackDamage);
+
+                    // Apply knockback to the enemy
+                    Rigidbody enemyRb = hit.collider.GetComponent<Rigidbody>();
+                    if (enemyRb != null)
+                    {
+                        Vector3 knockbackDirection = (hit.point - rayOrigin).normalized;
+                        knockbackDirection.y = 0; // Keep knockback horizontal
+
+                        // Apply force at the center of mass to prevent torque
+                        enemyRb.AddForce(knockbackDirection * knockbackForce, ForceMode.Impulse);
+                    }
                 }
             }
         }
 
-        // attack cooldown
+        // Start attack cooldown
         Invoke(nameof(ResetAttack), attackCooldown);
     }
+
+
+
 
     private void ResetAttack()
     {
@@ -183,21 +186,23 @@ public class PlayerController : MonoBehaviour
     // FOR DEBUGGING PURPOSES
     private void OnDrawGizmosSelected()
     {
-        // Draw the attack range sphere
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
+        if (playerCamera != null)
+        {
+            // Set the Gizmo color
+            Gizmos.color = Color.red;
 
-        // Draw the attack cone
-        Vector3 forward = transform.forward * attackRange;
-        Quaternion leftRayRotation = Quaternion.Euler(0, -attackAngle / 2, 0);
-        Quaternion rightRayRotation = Quaternion.Euler(0, attackAngle / 2, 0);
-        Vector3 leftRayDirection = leftRayRotation * forward;
-        Vector3 rightRayDirection = rightRayRotation * forward;
+            // Define the raycast origin and direction
+            Vector3 rayOrigin = playerCamera.transform.position;
+            Vector3 rayDirection = playerCamera.transform.forward * attackRange;
 
-        Gizmos.color = Color.blue;
-        Gizmos.DrawRay(transform.position, leftRayDirection);
-        Gizmos.DrawRay(transform.position, rightRayDirection);
+            // Draw the raycast line
+            Gizmos.DrawRay(rayOrigin, rayDirection);
+
+            // Optionally, draw a sphere at the end point to indicate the attack range
+            Gizmos.DrawWireSphere(rayOrigin + rayDirection, 0.1f); // The sphere radius is 0.1 units
+        }
     }
+
 
 
     private void HandleSprint()
@@ -388,6 +393,7 @@ public class PlayerController : MonoBehaviour
                 break;
             case PlayerEffect.Knight:
                 // range way down
+                attackRange = 10.0f;
                 break;
             case PlayerEffect.Rogue:
                 // enemies are mad!
@@ -397,6 +403,11 @@ public class PlayerController : MonoBehaviour
                 break;
             case PlayerEffect.Flames:
                 // take damage every 5s
+                if(!isFlamesEffectActive)
+                {
+                    isFlamesEffectActive = true;
+                    flamesCoroutine = StartCoroutine(FlamesDamageCoroutine());
+                }
                 break;
             case PlayerEffect.Fool:
                 // screenshake way up!
@@ -414,6 +425,71 @@ public class PlayerController : MonoBehaviour
             case PlayerEffect.Comet:
                 // Jump Height x5
                 jumpForce *= 5;
+                break;
+        }
+    }
+
+    private IEnumerator FlamesDamageCoroutine()
+    {
+        while(isFlamesEffectActive)
+        {
+            yield return new WaitForSeconds(5f);
+            TakeDamage(20f); // apply 20 damage to the player every 5 seconds.
+
+            if (health <= 0)
+            {
+                isFlamesEffectActive = false;
+            }
+        }
+    }
+
+    public void RemoveEffect(PlayerEffect effect)
+    {
+        switch(effect)
+        {
+            case PlayerEffect.Balance:
+                // do nothing!
+                break;
+            case PlayerEffect.Jester:
+                // emit silly noise
+                break;
+            case PlayerEffect.Knight:
+                // range way down
+                attackRange = 50.0f;
+                break;
+            case PlayerEffect.Rogue:
+                // enemies are mad!
+                break;
+            case PlayerEffect.Sun:
+                // enemies have 2xHP
+                break;
+            case PlayerEffect.Flames:
+                if (isFlamesEffectActive)
+                {
+                    isFlamesEffectActive = false;
+                    if (flamesCoroutine != null)
+                    {
+                        StopCoroutine(flamesCoroutine);
+                        flamesCoroutine = null;
+                    }
+                }
+                break;
+            case PlayerEffect.Fool:
+                // screenshake way up!
+                horizontalShakeMagnitude /= 20;
+                break;
+            case PlayerEffect.Fates:
+                // you have 1HP!
+                health = 100;
+                break;
+            case PlayerEffect.Donjon:
+                // you cannot move!
+                originalSpeed = 7;
+                moveSpeed = 7;
+                break;
+            case PlayerEffect.Comet:
+                // Jump Height x5
+                jumpForce /= 5;
                 break;
         }
     }
