@@ -7,6 +7,7 @@ public class EnemyController : MonoBehaviour
     public EnemyType enemyType = EnemyType.Melee;  // Select the enemy type in the Inspector
 
     public Transform player;  // Assign the player in the Inspector
+    public float health = 100f; // enemy health
 
     [Header("Movement Settings")]
     public float meleeSpeed = 7.0f;
@@ -160,5 +161,21 @@ public class EnemyController : MonoBehaviour
     private void ResetAttack()
     {
         canAttack = true;
+    }
+
+    public void TakeDamage(float damageAmount)
+    {
+        health -= damageAmount;
+        health = Mathf.Clamp(health, 0, health);
+
+        if (health <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        Destroy(gameObject);
     }
 }

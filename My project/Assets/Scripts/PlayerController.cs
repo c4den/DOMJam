@@ -1,14 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
     [Header("Player Attributes")]
     public float health = 50f;
     public float maxHealth = 200f;
-    public float damage = 10f;
     public float defense = 5f;
+    public bool isDead = false;
 
     [Header("Movement")]
     public float moveSpeed;
@@ -21,6 +22,14 @@ public class PlayerController : MonoBehaviour
     public float jumpCooldown;
     public float airMultiplier;
     bool readyToJump;
+
+    [Header("Attack Settings")]
+    public float attackRange = 2.0f;       // Range of the melee attack
+    public float attackDamage = 20f;       // Damage dealt by the attack
+    public float attackCooldown = 0.5f;    // Time between attacks
+    private bool canAttack = true;         // Whether the player can attack
+    public float attackAngle = 60f;        // Angle of the attack cone
+    public LayerMask enemyLayer;           // Layer mask to specify which layers are enemies
 
     [Header("Keybinds")]
     public KeyCode jumpKey = KeyCode.Space;
@@ -80,6 +89,9 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
+        if (isDead)
+            return;
+
         // Ground check
         grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
 
@@ -110,7 +122,83 @@ public class PlayerController : MonoBehaviour
             Jump();
             Invoke(nameof(ResetJump), jumpCooldown);
         }
+        
+        // Attack input
+        if (Input.GetMouseButtonDown(0) && canAttack)
+        {
+            PerformAttack();
+        }
     }
+
+    private void PerformAttack()
+    {
+        canAttack = false;
+
+        // play the attack anim
+        /*if (animator != null)
+        {
+            animator.SetTrigger("Attack");
+        }*/
+
+        // instantiate attack effect 
+        /*if (attackEffectPrefab != null)
+        {
+            Instantiate(attackEffectPrefab, transform.position + transform.forward, Quaternion.identity);
+        }*/
+
+        // find other colliders in attack range
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, attackRange, enemyLayer);
+
+        foreach (Collider hitCollider in hitColliders)
+        {
+            // fidn the direction to the target
+            Vector3 directionToTarget = (hitCollider.transform.position - transform.position).normalized;
+
+            // calculate the angle between the player's forward direction and the target
+            float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
+
+            if (angleToTarget < attackAngle / 2)
+            {
+                // the target is within the cone
+
+                // get the enemycontroller script
+                EnemyController enemy = hitCollider.GetComponent<EnemyController>();
+                if (enemy != null)
+                {
+                    // apply damage to the enemy
+                    enemy.TakeDamage(attackDamage);
+                }
+            }
+        }
+
+        // attack cooldown
+        Invoke(nameof(ResetAttack), attackCooldown);
+    }
+
+    private void ResetAttack()
+    {
+        canAttack = true;
+    }
+
+    // FOR DEBUGGING PURPOSES
+    private void OnDrawGizmosSelected()
+    {
+        // Draw the attack range sphere
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, attackRange);
+
+        // Draw the attack cone
+        Vector3 forward = transform.forward * attackRange;
+        Quaternion leftRayRotation = Quaternion.Euler(0, -attackAngle / 2, 0);
+        Quaternion rightRayRotation = Quaternion.Euler(0, attackAngle / 2, 0);
+        Vector3 leftRayDirection = leftRayRotation * forward;
+        Vector3 rightRayDirection = rightRayRotation * forward;
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawRay(transform.position, leftRayDirection);
+        Gizmos.DrawRay(transform.position, rightRayDirection);
+    }
+
 
     private void HandleSprint()
     {
@@ -225,8 +313,17 @@ public class PlayerController : MonoBehaviour
 
     private void Die()
     {
-        // handle player death (respawn or display game over screen)
         Debug.Log("Player has died");
+
+        isDead = true;
+
+        // Delay the scene reload by 2 seconds
+        Invoke(nameof(ReloadScene), 2f);
+    }
+
+    private void ReloadScene()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     // ==================== PICKUP FUNCTIONS =============================
@@ -251,7 +348,7 @@ public class PlayerController : MonoBehaviour
 
     public void IncreaseDamage(float amount)
     {
-        damage += amount;
+        attackDamage += amount;
     }
 
     public void IncreaseDefense(float amount)
@@ -303,7 +400,7 @@ public class PlayerController : MonoBehaviour
                 break;
             case PlayerEffect.Fool:
                 // screenshake way up!
-                horizontalShakeMagnitude *= 10;
+                horizontalShakeMagnitude *= 20;
                 break;
             case PlayerEffect.Fates:
                 // you have 1HP!
