@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class EnemyController : MonoBehaviour
 {
+    
     public enum EnemyType { Melee, Ranged }
     [Header("Enemy Settings")]
     public EnemyType enemyType = EnemyType.Melee;  // Select the enemy type in the Inspector
@@ -29,6 +30,8 @@ public class EnemyController : MonoBehaviour
     public float projectileSpeed = 10f;
     public float fireRate = 1.5f;
     private float nextFireTime = 0f;
+
+    public static bool sunEffectActive = false;
 
     private Rigidbody rb; // Reference to the Rigidbody
     private float groundY;     // Store the Y position where the enemy should stay (ground level)
@@ -58,6 +61,11 @@ public class EnemyController : MonoBehaviour
             {
                 collider.radius = rangedAttackRange;
             }
+        }
+
+        if (sunEffectActive)
+        {
+            health *= 2f;
         }
     }
 

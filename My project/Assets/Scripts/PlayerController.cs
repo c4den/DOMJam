@@ -57,6 +57,7 @@ public class PlayerController : MonoBehaviour
     [Header("DOM Effects")]
     private bool isFlamesEffectActive = false;
     private Coroutine flamesCoroutine;
+    private HashSet<PlayerEffect> activeEnemies = new HashSet<PlayerEffect>();
 
     public Transform orientation;
 
@@ -363,11 +364,6 @@ public class PlayerController : MonoBehaviour
 
     private HashSet<PlayerEffect> activeEffects = new HashSet<PlayerEffect>();
 
-    public void ApplyEffect(PlayerEffect effect)
-    {
-        ApplyEffectLogic(effect);
-    }
-
     /*
     Balance, // no negative effects, go all out!
     Jester, // You and enemies emit silly noises when hit
@@ -380,6 +376,25 @@ public class PlayerController : MonoBehaviour
     Donjon, // You cannot move
     Comet // Jump Height x5
     */
+
+    public void ApplyEffect(PlayerEffect effect)
+    {
+        if (!activeEffects.Contains(effect))
+        {
+            activeEffects.Add(effect);
+            ApplyEffectLogic(effect);
+        }
+    }
+
+    public void RemoveAllEffects()
+    {
+        foreach (PlayerEffect effect in activeEffects)
+        {
+            RemoveEffect(effect);
+        }
+
+        activeEffects.Clear();
+    }
 
     private void ApplyEffectLogic(PlayerEffect effect)
     {
@@ -397,6 +412,7 @@ public class PlayerController : MonoBehaviour
                 break;
             case PlayerEffect.Rogue:
                 // enemies are mad!
+
                 break;
             case PlayerEffect.Sun:
                 // enemies have 2xHP
@@ -480,7 +496,7 @@ public class PlayerController : MonoBehaviour
                 break;
             case PlayerEffect.Fates:
                 // you have 1HP!
-                health = 100;
+                health += 15;
                 break;
             case PlayerEffect.Donjon:
                 // you cannot move!

@@ -355,6 +355,7 @@
 "Assets/Scripts/CameraController.cs"
 "Assets/Scripts/EffectEnum.cs"
 "Assets/Scripts/EnemyController.cs"
+"Assets/Scripts/EnemySpawner.cs"
 "Assets/Scripts/MainMenu.cs"
 "Assets/Scripts/MoveCamera.cs"
 "Assets/Scripts/PickupController.cs"
