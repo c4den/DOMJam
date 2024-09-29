@@ -5,7 +5,8 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [Header("Player Attributes")]
-    public float health = 100f;
+    public float health = 50f;
+    public float maxHealth = 200f;
     public float damage = 10f;
     public float defense = 5f;
 
@@ -205,6 +206,29 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // ==================== GAME INTERACTIONS ============================
+    public void TakeDamage(float damageAmount)
+    {
+        Debug.Log("Player took damage!" + damageAmount);
+        health -= damageAmount;
+        health = Mathf.Clamp(health, 0, maxHealth);
+
+        // when there's UI implemented, update it
+        // UIManager.Instance.UpdateHealth(health);
+
+        // check if player is dead
+        if (health <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        // handle player death (respawn or display game over screen)
+        Debug.Log("Player has died");
+    }
+
     // ==================== PICKUP FUNCTIONS =============================
 
     // all of the things here can be made negative. We use this for our RNG later.
@@ -279,7 +303,7 @@ public class PlayerController : MonoBehaviour
                 break;
             case PlayerEffect.Fool:
                 // screenshake way up!
-                horizontalShakeMagnitude *= 3;
+                horizontalShakeMagnitude *= 10;
                 break;
             case PlayerEffect.Fates:
                 // you have 1HP!
