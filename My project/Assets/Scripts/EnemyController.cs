@@ -30,11 +30,16 @@ public class EnemyController : MonoBehaviour
     public float fireRate = 1.5f;
     private float nextFireTime = 0f;
 
+    private Animator animator;
+
     private float groundY;     // Store the Y position where the enemy should stay (ground level)
 
     void Start()
     {
         groundY = transform.position.y;
+
+        animator = GetComponent<Animator>();
+
 
         // Set the speed based on enemy type
         speed = (enemyType == EnemyType.Melee) ? meleeSpeed : rangedSpeed;
@@ -58,14 +63,17 @@ public class EnemyController : MonoBehaviour
 
     void Update()
     {
+
         // Calculate the direction to the player
         Vector3 direction = player.position - transform.position;
         direction.y = 0; // Lock Y-axis
+        transform.LookAt(player.transform);
 
         if (enemyType == EnemyType.Melee)
         {
             // Move toward the player
             MoveTowardsPlayer(direction.normalized);
+            animator.SetBool("IsMoving", true);
         }
         else if (enemyType == EnemyType.Ranged)
         {
@@ -76,11 +84,13 @@ public class EnemyController : MonoBehaviour
                 // Player is too close; move away
                 Vector3 retreatDirection = (transform.position - player.position).normalized;
                 Move(retreatDirection);
+                animator.SetBool("IsMoving", true);
             }
             else if (distanceToPlayer > rangedAttackRange)
             {
                 // Player is too far; move closer
                 MoveTowardsPlayer(direction.normalized);
+                animator.SetBool("IsMoving", true);
             }
             else
             {
@@ -89,6 +99,7 @@ public class EnemyController : MonoBehaviour
                 {
                     FireProjectile();
                     nextFireTime = Time.time + fireRate;
+                    animator.SetBool("IsMoving", false);
                 }
             }
         }
@@ -109,6 +120,8 @@ public class EnemyController : MonoBehaviour
 
     private void FireProjectile()
     {
+        animator.SetTrigger("AttackTrigger");
+
         // Instantiate the projectile
         GameObject projectile = Instantiate(projectilePrefab, transform.position + Vector3.up * 1.0f, Quaternion.identity);
 
@@ -131,10 +144,13 @@ public class EnemyController : MonoBehaviour
         // Check if the enemy collided with the player
         if (other.CompareTag("Player") && canAttack)
         {
+            animator.SetTrigger("AttackTrigger");
+
             // Get the player's PlayerController script
             PlayerController playerController = other.GetComponent<PlayerController>();
             if (playerController != null)
             {
+                animator.SetBool("IsMoving", false);
                 // Apply damage to the player
                 playerController.TakeDamage(damage);
 
@@ -178,4 +194,5 @@ public class EnemyController : MonoBehaviour
     {
         Destroy(gameObject);
     }
+
 }

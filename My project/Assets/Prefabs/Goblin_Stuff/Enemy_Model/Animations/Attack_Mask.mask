@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!319 &31900000
+AvatarMask:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Attack_Mask
+  m_Mask: 00000000010000000100000000000000000000000100000001000000010000000100000000000000000000000100000001000000
+  m_Elements:
+  - m_Path: 
+    m_Weight: 1
+  - m_Path: polySurface5
+    m_Weight: 0
+  - m_Path: RIG
+    m_Weight: 0
+  - m_Path: RIG/Root
+    m_Weight: 0
+  - m_Path: RIG/Root/Hips
+    m_Weight: 0
+  - m_Path: RIG/Root/Hips/Leg_L
+    m_Weight: 0
+  - m_Path: RIG/Root/Hips/Leg_L/Knee1_L
+    m_Weight: 0
+  - m_Path: RIG/Root/Hips/Leg_L/Knee1_L/Knee2_L
+    m_Weight: 0
+  - m_Path: RIG/Root/Hips/Leg_L/Knee1_L/Knee2_L/Foot_L
+    m_Weight: 0
+  - m_Path: RIG/Root/Hips/Reg_R
+    m_Weight: 0
+  - m_Path: RIG/Root/Hips/Reg_R/Knee1_R
+    m_Weight: 0
+  - m_Path: RIG/Root/Hips/Reg_R/Knee1_R/Knee2_R
+    m_Weight: 0
+  - m_Path: RIG/Root/Hips/Reg_R/Knee1_R/Knee2_R/Foot_R
+    m_Weight: 0
+  - m_Path: RIG/Root/Hips/Spine1
+    m_Weight: 1
+  - m_Path: RIG/Root/Hips/Spine1/Spine2
+    m_Weight: 1
+  - m_Path: RIG/Root/Hips/Spine1/Spine2/Spine3
+    m_Weight: 1
+  - m_Path: RIG/Root/Hips/Spine1/Spine2/Spine3/Clav_L
+    m_Weight: 1
+  - m_Path: RIG/Root/Hips/Spine1/Spine2/Spine3/Clav_L/Shoulder_L
+    m_Weight: 1
+  - m_Path: RIG/Root/Hips/Spine1/Spine2/Spine3/Clav_L/Shoulder_L/Elbow_L
+    m_Weight: 1
+  - m_Path: RIG/Root/Hips/Spine1/Spine2/Spine3/Clav_L/Shoulder_L/Elbow_L/Wrist_L
+    m_Weight: 1
+  - m_Path: RIG/Root/Hips/Spine1/Spine2/Spine3/Clav_L/Shoulder_L/Elbow_L/Wrist_L/Arm_Tip
+    m_Weight: 1
+  - m_Path: RIG/Root/Hips/Spine1/Spine2/Spine3/Clav_R
+    m_Weight: 1
+  - m_Path: RIG/Root/Hips/Spine1/Spine2/Spine3/Clav_R/Shoulder_R
+    m_Weight: 1
+  - m_Path: RIG/Root/Hips/Spine1/Spine2/Spine3/Clav_R/Shoulder_R/Elbow_R
+    m_Weight: 1
+  - m_Path: RIG/Root/Hips/Spine1/Spine2/Spine3/Clav_R/Shoulder_R/Elbow_R/Wrist_R
+    m_Weight: 1
+  - m_Path: RIG/Root/Hips/Spine1/Spine2/Spine3/Clav_R/Shoulder_R/Elbow_R/Wrist_R/Arm_Tip
+    m_Weight: 1
+  - m_Path: RIG/Root/Hips/Spine1/Spine2/Spine3/Neck
+    m_Weight: 1
+  - m_Path: RIG/Root/Hips/Spine1/Spine2/Spine3/Neck/Head_Base
+    m_Weight: 1
+  - m_Path: RIG/Root/Hips/Spine1/Spine2/Spine3/Neck/Head_Base/Head_Tip
+    m_Weight: 1
